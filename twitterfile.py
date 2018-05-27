@@ -1,126 +1,153 @@
-#importing the required libraries
-
+#importing libraries needed
 import tweepy
-import textblob
-from textblob import TextBlob
 import json
-import paralleldots
+from paralleldots import set_api_key, get_api_key
 import nltk
-from nltk.corpus import stopwords
-from collections import Counter
+from nltk.corpus import *
 nltk.download('stopwords')
+from collections import Counter
 
-#Authentication part
+# authentication keys
+consumer_key = ""
+consumer_secret = ""
+access_token = ""
+access_secret = ""
+oauth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+oauth.set_access_token(access_token, access_secret)
+api = tweepy.API(oauth)
 
-consumer_key="HjovMqT52uTUNRGhu6qTPw3gm"
-consumer_secret="7WfAbjMfKzjOtO0SM18ZSzHz1OJZlx1MlZSptex41ka3TqqiFy"
-access_token="990486148517478400-swT3yqQSrasIt84nFAqf8uaO7uOSWjS"
-access_token_secret="CZ2E0eZrfZjJcN8Cc2bVLhTo6BWU3rhdOYeo9ecjzf79x"
-oauth=tweepy.OAuthHandler(consumer_key,consumer_secret)
-oauth.set_access_token(access_token,access_token_secret)
-api=tweepy.API(oauth)
+# displaying menu
+def display_menu():
+    global flag
+    message = str
+    while flag==True:
+        print("MENU")
+        print("1. Retrieve tweets")
+        print("2. Count the followers")
+        print("3. Determine the sentiment")
+        print("4. Location, Language and Time Zone")
+        print("5. Compare tweets")
+        print("6. Analyse the top usage")
+        print("7. Tweet a message")
+        print("8. Exit")
+        option = int(input("What do you wanna do?"))
+        if option==1:
+            Get_Search()
+            display_menu()
+        elif option==2:
+            fcount()
+            display_menu()
+        elif option == 3:
+            sentiment_analysis()
+            display_menu()
+        elif option == 4:
+            location()
+            display_menu()
+        elif option == 5:
+            compare()
+            display_menu()
+        elif option == 6:
+            top_usage()
+            display_menu()
+        elif option==7:
+            tweet_status(new=message)
+            display_menu()
+        elif option==8:
+            print("See u again, Tata")
+            flag = False
+        else:
+            print("Enter a valid value!")
+            display_menu()
 
-# tweet with hashtag
-
+# putting on the hashtag
 def query():
     global tweets
-    input = raw_input("Enter the tweet without hashtag")
-    input = "#" + input
-    tweets = api.search(q=input)
+    tweet_input = input("For which hashtag do you want to see the tweets? (Do not include #)")
+    tweet_input = "#" + tweet_input
+    tweets = api.search(q=tweet_input)
 
-#structure of status object of tweet
-
-def GetSearch():
+#forming the status object
+def Get_Search():
     query()
     status = tweets[0]
-    json_string = json.dumps(status._json,indent=4,sort_keys=True)
-    print(json_string)
+    json_str = json.dumps(status._json,indent=4,sort_keys=True)
+    print(json_str)
 
-#followers count
-
+# counting followers
 def fcount():
     query()
+    print("UserName      Follower Count")
     for tweet in tweets:
-        print(tweet.user.name+"        "+str(tweet.user.followers_count))
+        print(tweet.user.name+"     "+str(tweet.user.followers_count))
 
-#sentiment analyis
-
-def sent_analysis():
-    positive=0;
-    negative=0;
-    neutral=0;
+# determining the sentiment
+def sentiment_analysis():
+    flagpos = 0
+    flagneu = 0
+    flagneg = 0
     query()
-    from paralleldots import set_api_key,sentiment
-# Setting  API key
-    set_api_key("F6IhnjekXoKsgzOwy1ZsGCX6ph76YK5F6SzFf968gOk")
-#Viewing  API key
-    paralleldots.get_api_key()
+    from paralleldots import similarity, taxonomy, sentiment, emotion, abuse
+    set_api_key("")
+    get_api_key()
     for tweet in tweets:
-        tweet_text=tweet.text
-        sentiment_type=sentiment(tweet_text)
-        sentiment_values=sentiment_type['sentiment']
-        if sentiment_values=="positive":
-            positive=positive+1;
-        elif sentiment_values=="negative":
-            negative=negative+1;
+        text = tweet.text
+        sentiment_value = sentiment(text)
+        values1 = sentiment_value['sentiment']
+        if values1 == "positive":
+            flagpos = flagpos + 1
+        elif values1 == "negative":
+            flagneg = flagneg + 1
         else:
-            neutral=negative+1;
-    if positive>negative and positive>neutral:
-        print("POSITIVE SENTIMENT with count"+ " "+str(positive))
-    elif negative>positive and negative>neutral:
-        print("NEGATIVE SENTIMENT with count" + " " +str(negative))
+            flagneu = flagneu + 1
+    if flagneu > flagneg and flagneu > flagpos:
+        print("Sentiment: Neutral")
+    elif flagneg > flagneu and flagneg > flagpos:
+        print("Sentiment: Negative")
     else:
-        print("NEUTRAL SENTIMNET with count" + " " +str(neutral))
+        print("Sentiment: Positive")
 
-#determining the location time zone and language
-
+# determines the location, language and time zone
 def location():
-    global time_zone,location,language
+    global time_zone1,loca,lang
     query()
-    location_dict = {}
-    language_dict = {}
-    time_zone_dict = {}
+    location = {}
+    language = {}
+    time_zone = {}
     for tweet in tweets:
-        location = tweet.user.location_dict
-        language = tweet.user.lang_dict
-        time_zone = tweet.user.time_zone_dict
-        if location in location_dict:
-            location_dict[location] += 1
+        loca = tweet.user.location
+        lang = tweet.user.lang
+        time_zone1 = tweet.user.time_zone
+        if loca in location:
+            location[loca] += 1
         else:
-            location_dict[location] = 1
-        if language in language_dict:
-            language_dict[language] += 1
+            location[loca] = 1
+        if lang in language:
+            language[lang] += 1
         else:
-            language_dict[language] = 1
-        if time_zone in time_zone_dict:
-            time_zone_dict[time_zone] += 1
+            language[lang] = 1
+        if time_zone1 in time_zone:
+            time_zone[time_zone1] += 1
         else:
-            time_zone_dict[time_zone] = 1
-    # limiting the display of the values
-    if None in time_zone_dict:
-        del time_zone_dict[None]
-    if '' in time_zone_dict:
-        del time_zone_dict['']
-    if '' in language_dict:
-        del language_dict['']
-    if '' in location_dict:
-        del location_dict['']
-    if None in location_dict:
-        del location_dict[None]
-    if None in language_dict:
-        del language_dict[None]
-    language_count = dict(Counter(language_dict).most_common(5))
+            time_zone[time_zone1] = 1
+    if time_zone==None or time_zone=="" or time_zone[time_zone1]==1:
+        del time_zone[None]
+        del time_zone[""]
+        del time_zone[:][1]
+    if location== None or location== "" or location[loca]==1:
+        del location[None]
+        del location[""]
+        del location[:][1]
+    if language== None or language=="":
+        del language[None]
+        del language[""]
     print("Language:")
-    print(language_count)
-    location_count = dict(Counter(location_dict).most_common(5))
+    print(language)
     print("Location:")
-    print(location_count)
-    time_zone_count = dict(Counter(time_zone_dict).most_common(5))
+    print(location)
     print("Time Zone:")
-    print(time_zone_count)
+    print(time_zone)
 
-#comaprison of tweets
-
+# compare tweets
 def compare():
     flagword = 0
     flagword1 = 0
@@ -152,12 +179,11 @@ def compare():
         cur_tweet = re.split(r"\s", cur_tweet)
         for word in cur_tweet:
             word = word.upper()
-            if word == "INDIA" or word == "India" or word == "India":
+            if word == "INDIA":
                 flagword1 = flagword1 + 1
     print("INDIA BY DONALD TRUMP: " + str(flagword1))
 
 # analysing top usage
-
 def top_usage():
     global count
     stop_words = set(stopwords.words('english'))
@@ -179,42 +205,13 @@ def top_usage():
                 count = Counter(cur_tweet).most_common(10)
         print(count)
 
-
-#tweet a message
-
+#  updates status
 def tweet_status(new):
-    message1 = raw_input("What do u want to update as a status?")
-    api.update_status(message1)
+    message = input("What is the status that you want to set?")
+    api.update_status(message)
 
-#menu creation to select the options
-
-show_menu=True
-while show_menu==True:
-     menu_choices = ("What do you want to do? \n1. Retrieve the tweets \n2. Count the followers \n3. Determine the sentiment \n4. Determine the location,language and time zone \n5. Comparison of the tweets \n6. Analyse the top usage \n7. Tweet a message \n8. Exit the application  ")
-     menu_choice = raw_input(menu_choices)
-     if menu_choice == "1":
-         print('Retrieving the tweets')
-         GetSearch()
-     elif menu_choice == "2":
-         print("counting the followers")
-         fcount()
-     elif menu_choice == "3":
-         print("Determining the sentiments")
-         sent_analysis()
-     elif menu_choice == "4":
-         print("Determining the location,language and time zone")
-         location()
-     elif menu_choice == "5":
-         print("Comparing the tweets")
-         compare()
-     elif menu_choice == "6":
-         print("Analysing the top usage")
-         top_usage()
-     elif menu_choice == "7":
-         print("Tweeting a message")
-         tweet_status(message1)
-     else:
-         show_menu = False
+print("Twitter Bot")
+display_menu()
 
 
 
