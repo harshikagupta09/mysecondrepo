@@ -212,8 +212,3 @@ def tweet_status(new):
 
 print("Twitter Bot")
 display_menu()
-
-
-
-
-
